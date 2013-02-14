@@ -1,0 +1,53 @@
+=>e.c
+-#include <unistd.h>
+-#include <fcntl.h>
+-#include <termios.h>
+-#include <poll.h>
+-#include <sys/mman.h>
+-#include <sys/stat.h>
+-#include <stdint.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <sys/ioctl.h>
+-#include <errno.h>
+-
+-#define __USE_GNU
+-
+-#include <regex.h>
+-
+-
+-struct termios oldkey;
+-struct winsize win;
+-
+-void initterm() {
+-	struct termios newkey;
+-	tcgetattr(STDIN_FILENO,&oldkey);
+-	newkey.c_cflag = B9600 | CRTSCTS | CS8 | CLOCAL | CREAD;
+-	newkey.c_iflag = IGNPAR;
+-	newkey.c_oflag = 0;
+-	newkey.c_lflag = 0;
+-	newkey.c_cc[VMIN]=1;
+-	newkey.c_cc[VTIME]=0;
+-	tcflush(STDIN_FILENO, TCIFLUSH);
+-	tcsetattr(STDIN_FILENO,TCSANOW,&newkey);
+-	ioctl(1,TIOCGWINSZ,&win);
+-}
+-
+-void resetterm() {
+-	tcsetattr(STDIN_FILENO,TCSANOW,&oldkey);
+-}
+
+-void die(void) {
+-	abort();
+-}
+
+-int main(int argc, char *argv[]) {
+-	initterm();
+-	for(;;) {
+-		char c;
+-		if(read(STDIN_FILENO,&c,1)==-1) die();
+-		printf("char '%c' %02x\r\n",c,c);
+-	}
+-}
+
