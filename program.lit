@@ -37,9 +37,14 @@
 -	clear();
 -	int y;
 -	int tab=0;
+
+-	int highlight=0;
+
 -	for(y=0;y<win.ws_row-5;y++) {
 -		int x=0;
 -		for(;;) {
+-			int inside=(p>=found && p<founde);
+
 -			char c;
 -			if(tab) {
 -				c=' ';
@@ -52,21 +57,59 @@
 -			if(c=='\t') { tab=8; continue; }
 -			if(c=='\n') break;
 -			if(x<win.ws_col-5) {
+
+				Highlight search mark.
+
+-				if(found) {
+-					if(highlight) {
+-						if(!inside) { highlight=0; write(STDOUT_FILENO,CSI "0m",4); }
+-					} else {
+-						if(inside) { highlight=1; write(STDOUT_FILENO,CSI "0m" CSI "01;31m",12); }
+-					}
+-				}
+
 -				write(STDOUT_FILENO,&c,1);
+
 -				x++;
 -			} else if(x==win.ws_col-5) {
--				write(STDOUT_FILENO,CSI "0m" CSI "01;32m..." CSI "0m",20);
+-				write(STDOUT_FILENO,CSI "0m" CSI "01;32m..." CSI "0m",19);
 -				x++;
 -			}
 -		}
 -		write(STDOUT_FILENO,"\r\n",2);
 -	}
 
+	Display where found
+
+-	write(STDOUT_FILENO,"\r\n",2);
+-	if(found) write(STDOUT_FILENO,found,10);
+
 	Display what is typed
 
 -	write(STDOUT_FILENO,"\r\n",2);
 -	write(STDOUT_FILENO,input,pinput-input);
 -	
+-}
+
+		Search
+
+=decl
+-char *found=0;
+-char *founde=0;
+-void search(void);
+
+=search
+-void search(void) {
+-	int search_size=pinput-input;
+-	char *p=text;
+-	for(;p<texte-search_size;p++) {
+-		if(memcmp(p,input,search_size)==0) {
+-			found=p;
+-			founde=p+search_size;
+-			return;
+-		}
+-	}
+-	found=0;
 -}
 
 		Keyboard input
@@ -77,16 +120,22 @@
 
 -void key(char c) {
 -	if(c=='\x03') die();
--	*pinput++=c;
+-	if(c=='\x7f') { pinput--; }
+-	else { *pinput++=c; }
+-	search();
 -}
 
 		Main loop
 
 =>e.c
 >includes
+
+>decl
+
 >termios
 >loadfile
 >input
+>search
 >display
 
 -int main(int argc, char *argv[]) {
