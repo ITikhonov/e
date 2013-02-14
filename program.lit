@@ -25,7 +25,6 @@
 -	texte=p;
 -}
 
-
 		Display
 
 =display
@@ -62,13 +61,23 @@
 -		}
 -		write(STDOUT_FILENO,"\r\n",2);
 -	}
+
+	Display what is typed
+
+-	write(STDOUT_FILENO,"\r\n",2);
+-	write(STDOUT_FILENO,input,pinput-input);
+-	
 -}
 
 		Keyboard input
 
 =input
--void input(char c) {
--	if(c=='q') die();
+-char input[1024];
+-char *pinput=input;
+
+-void key(char c) {
+-	if(c=='\x03') die();
+-	*pinput++=c;
 -}
 
 		Main loop
@@ -77,8 +86,8 @@
 >includes
 >termios
 >loadfile
->display
 >input
+>display
 
 -int main(int argc, char *argv[]) {
 -	if(argc!=2) {
@@ -93,7 +102,7 @@
 
 -		char c;
 -		if(read(STDIN_FILENO,&c,1)==-1) die();
--		input(c);
+-		key(c);
 -	}
 -}
 
