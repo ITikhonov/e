@@ -1,4 +1,85 @@
+
+		Load file
+
+=loadfile
+-char *text=0;
+-char *texte=0;
+-#define READSIZE (10240)
+
+-void loadfile(char *name) {
+-	int f=open(name,O_CREAT|O_RDWR,0644);
+-	struct stat st;
+-	fstat(f,&st);
+
+-	int rest=st.st_size;
+
+-	text=realloc(text,rest);
+-	char *p=text;
+-	while(rest>0) {
+-		rest-=READSIZE;
+-		int toread=rest>0?READSIZE:(READSIZE+rest);
+-		int r=read(f,p,toread);
+-		if(r!=toread) die();
+-		p+=toread;
+-	}
+-	texte=p;
+-}
+
+
+		Display
+
+=display
+-#define CSI "\x1b["
+
+-void clear() { write(STDOUT_FILENO,CSI "H" CSI "2J",7); }
+
+-void display(void) {
+-	char *p=text;
+-	clear();
+-	for(;p<texte;) {
+-		if(*p=='\n') {
+-			write(STDOUT_FILENO,"\r",1);
+-		}
+-		write(STDOUT_FILENO,p,1);
+-		p++;
+-	}
+-}
+
+		Keyboard input
+
+=input
+-void input(char c) {
+-	display();
+-	if(c=='q') die();
+-}
+
+		Main loop
+
 =>e.c
+>includes
+>termios
+>loadfile
+>display
+>input
+
+-int main(int argc, char *argv[]) {
+-	if(argc!=2) {
+-		resetterm();
+-		printf("usage: %s filename\n",argv[0]);
+-		return 1;
+-	}
+-	loadfile(argv[1]);
+-	initterm();
+-	for(;;) {
+-		char c;
+-		if(read(STDIN_FILENO,&c,1)==-1) die();
+-		input(c);
+-	}
+-}
+
+
+
+=includes
 -#include <unistd.h>
 -#include <fcntl.h>
 -#include <termios.h>
@@ -8,15 +89,17 @@
 -#include <stdint.h>
 -#include <stdio.h>
 -#include <stdlib.h>
+-#include <stdint.h>
 -#include <string.h>
 -#include <sys/ioctl.h>
 -#include <errno.h>
--
+
 -#define __USE_GNU
--
+
 -#include <regex.h>
--
--
+
+
+=termios
 -struct termios oldkey;
 -struct winsize win;
 -
@@ -39,15 +122,22 @@
 -}
 
 -void die(void) {
+-	resetterm();
 -	abort();
 -}
 
+=>input.c
+>includes
+>termios
 -int main(int argc, char *argv[]) {
+-	int q=0;
 -	initterm();
 -	for(;;) {
 -		char c;
 -		if(read(STDIN_FILENO,&c,1)==-1) die();
 -		printf("char '%c' %02x\r\n",c,c);
+-		if(c=='q') q++;
+-		if(q==10) die();
 -	}
 -}
 
