@@ -118,9 +118,11 @@
 -	char *cm=s;
 
 -	char *fm=0;
+-	int tail=0;
 
 -	for(;p<texte;p++) {
 -		if(*p=='\n') {
+-			fm=0;
 -			cm0=cm=s;
 -		}
 -		if(*p==*cm) {
@@ -135,13 +137,13 @@
 			We do not need to match spaces, they
 			separate tokens.
 
--			if(*cm==' ') { cm++; if(!fm) fm=p-(cm-cm0); cm0=cm; }
--			if(*cm==' ') { cm++; s=cm0=cm; if(!pfound) pfound=fm; fm=0;  }
+-			if(*cm==' ') { if(!fm) fm=p-(cm-cm0-1); cm++; cm0=cm; }
+-			if(*cm==' ') { cm++; s=cm0=cm; if(!tail) pfound=0; fm=0; }
+-			if(*cm=='\t') { pfound=fm?fm:(p-(cm-cm0-1)); cm++; s=cm0=cm; tail=1; fm=0; }
 -		} else {
 -			cm=cm0;
 -		}
 
--		
 -	}
 
 -}
@@ -154,6 +156,7 @@
 
 -void key(char c) {
 -	if(c=='\x03') die();
+-	if(c=='\x1b') abort();
 -	if(c=='\x7f') { pinput--; }
 -	else if(c=='\r') { pinput=input; }
 -	else { *pinput++=c; }
