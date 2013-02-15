@@ -43,7 +43,7 @@
 -	for(y=0;y<win.ws_row-5;y++) {
 -		int x=0;
 -		for(;;) {
--			int inside=(p>=found && p<founde);
+-			int inside=(p>=(pfound?pfound:found) && p<founde);
 
 -			char c;
 -			if(tab) {
@@ -81,6 +81,7 @@
 
 	Display what is typed
 
+-	write(STDOUT_FILENO,CSI "0m",4);
 -	write(STDOUT_FILENO,"\r\n",2);
 -	write(STDOUT_FILENO,input,pinput-input);
 -	
@@ -89,6 +90,7 @@
 		Search
 
 =decl
+-char *pfound=0;
 -char *found=0;
 -char *founde=0;
 
@@ -109,10 +111,13 @@
 -	} else {
 -		s=input;
 -		p=text;
+-		pfound=0;
 -	}
 
 -	char *cm0=s;
 -	char *cm=s;
+
+-	char *fm=0;
 
 -	for(;p<texte;p++) {
 -		if(*p=='\n') {
@@ -122,7 +127,7 @@
 -			cm++;
 
 -			if(cm==pinput) {
--				found=p-(cm-cm0)+1;
+-				found=fm?fm:(p-(cm-cm0)+1);
 -				founde=p+1;
 -				return;
 -			}
@@ -130,7 +135,8 @@
 			We do not need to match spaces, they
 			separate tokens.
 
--			if(*cm==' ') { cm++; cm0=cm; }
+-			if(*cm==' ') { cm++; if(!fm) fm=p-(cm-cm0); cm0=cm; }
+-			if(*cm==' ') { cm++; s=cm0=cm; if(!pfound) pfound=fm; fm=0;  }
 -		} else {
 -			cm=cm0;
 -		}
