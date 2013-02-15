@@ -96,20 +96,53 @@
 =decl
 -char *found=0;
 -char *founde=0;
+
 -void search(void);
 
 =search
+
 -void search(void) {
--	int search_size=pinput-input;
--	char *p=text;
--	for(;p<texte-search_size;p++) {
--		if(memcmp(p,input,search_size)==0) {
--			found=p;
--			founde=p+search_size;
--			return;
--		}
+
+	Loop throught each space-separated word.
+
+-	char *s;
+-	char *p;
+
+-	if(*input==' ') {
+-		s=input+1;
+-		p=founde;
+-	} else {
+-		s=input;
+-		p=text;
 -	}
--	found=0;
+
+-	char *cm0=s;
+-	char *cm=s;
+
+-	for(;p<texte;p++) {
+-		if(*p=='\n') {
+-			cm0=cm=s;
+-		}
+-		if(*p==*cm) {
+-			cm++;
+
+-			if(cm==pinput) {
+-				found=p-(cm-cm0)+1;
+-				founde=p+1;
+-				return;
+-			}
+
+			We do not need to match spaces, they
+			separate tokens.
+
+-			if(*cm==' ') { cm++; cm0=cm; }
+-		} else {
+-			cm=cm0;
+-		}
+
+-		
+-	}
+
 -}
 
 		Keyboard input
@@ -121,6 +154,7 @@
 -void key(char c) {
 -	if(c=='\x03') die();
 -	if(c=='\x7f') { pinput--; }
+-	else if(c=='\r') { pinput=input; }
 -	else { *pinput++=c; }
 -	search();
 -}
