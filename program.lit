@@ -79,11 +79,6 @@
 -		write(STDOUT_FILENO,"\r\n",2);
 -	}
 
-	Display where found
-
--	write(STDOUT_FILENO,"\r\n",2);
--	if(found) write(STDOUT_FILENO,found,10);
-
 	Display what is typed
 
 -	write(STDOUT_FILENO,"\r\n",2);
