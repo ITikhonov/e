@@ -39,6 +39,7 @@
 -	int tab=0;
 
 -	int highlight=0;
+-	unsigned int insert_idx=(pinput>input && input[0]=='\r')?1:-1;
 
 -	for(y=0;y<win.ws_row-5;y++) {
 -		int x=0;
@@ -51,7 +52,12 @@
 -				tab--;
 -			} else {
 -				if(!(p<texte)) return;
--				c=*p++;
+
+-				if(p==found && insert_idx < pinput-input) {
+-					c=input[insert_idx++];
+-				} else {
+-					c=*p++;
+-				}
 -			}
 
 -			if(c=='\t') { tab=8; continue; }
