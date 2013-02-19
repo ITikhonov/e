@@ -55,6 +55,7 @@
 
 -				if(p==found && insert_idx < pinput-input) {
 -					c=input[insert_idx++];
+-					if(c=='\r') c='\n';
 -				} else {
 -					c=*p++;
 -				}
@@ -170,9 +171,9 @@
 
 -void key(char c) {
 -	if(c=='\x03') die();
--	if(c=='\x1b') abort();
 -	if(c=='\x7f') { pinput--; }
--	else if(pinput>input && c=='\r') { pinput=input; }
+-	else if(pinput>input && c=='\r' && input[0]!='\r') { pinput=input; }
+-	else if(c=='\x1b') { pinput=input; }
 -	else { *pinput++=c; }
 -	search();
 -}
@@ -266,8 +267,8 @@
 -		char c;
 -		if(read(STDIN_FILENO,&c,1)==-1) die();
 -		printf("char '%c' %02x\r\n",c,c);
--		if(c=='q') q++;
--		if(q==10) die();
+-		if(c=='\x03') { q++; } else { q=0; }
+-		if(q==3) die();
 -	}
 -}
 
