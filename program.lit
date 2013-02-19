@@ -1,3 +1,26 @@
+		Save file
+
+=includes
+-#include <limits.h>
+
+=savefile
+- void savefile(void) {
+-	char tmp[]="./.e.XXXXXX";
+-	int f=mkstemp(tmp);
+-
+-	int i;
+-	int size=texte-text;
+-	for(i=0;i<size;) {
+-		int n=size-i;
+-		if(n>10240) n=10240;
+-		int r=write(f,text+i,n);
+-		if(r<0) die(); // FIXME: not really should we die
+-		i+=r;
+-	}
+-	close(f);
+-	rename(tmp,filename);
+-}
+
 
 		Insertion
 
@@ -30,8 +53,10 @@
 -char *texte=0;
 -#define READSIZE (10240)
 
--void loadfile(char *name) {
--	int f=open(name,O_CREAT|O_RDWR,0644);
+-char *filename=0;
+
+-void loadfile(void) {
+-	int f=open(filename,O_CREAT|O_RDONLY,0666);
 -	struct stat st;
 -	fstat(f,&st);
 
@@ -47,6 +72,7 @@
 -		p+=toread;
 -	}
 -	texte=p;
+-	close(f);
 -}
 
 		Display
@@ -195,6 +221,8 @@
 
 -void key(char c) {
 -	if(c=='\x03') die();
+-	if(c=='\x13') { savefile(); return; }
+
 -	if(c=='\x7f') { pinput--; }
 -	else if(pinput>input && c=='\r' && input[0]!='\r') { pinput=input; }
 -	else if(pinput>input && c=='\x1b' && input[0]=='\r') { insert(found,input+1,(pinput-input)-1); pinput=input; }
@@ -212,6 +240,7 @@
 
 >termios
 >loadfile
+>savefile
 >insert
 >input
 >search
@@ -223,7 +252,8 @@
 -		printf("usage: %s filename\n",argv[0]);
 -		return 1;
 -	}
--	loadfile(argv[1]);
+-	filename=argv[1];
+-	loadfile();
 -	initterm();
 -	for(;;) {
 -		display();
