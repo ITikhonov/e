@@ -44,6 +44,21 @@
 
 -}
 
+		Erase
+
+=erase
+-void erase(void) {
+-	if(!found) return;
+-	if(!founde) return;
+
+-	memmove(found,founde,texte-founde);
+-	int ifound=found-text;
+-	int size=ifound+(texte-founde);
+-	text=realloc(text,size);
+-	texte=text+size;
+-	found=founde=text+ifound;
+-	pfound=0;
+-}
 
 
 		Load file
@@ -238,7 +253,7 @@
 -	if(c=='\x03') die();
 -	if(c=='\x13') { savefile(); return; }
 
--	if(c=='\x7f') { pinput--; }
+-	if(c=='\x7f') { if(pinput==input) { erase(); } else { pinput--; } }
 -	else if(pinput>input && c=='\r' && input[0]!='\r') { pinput=input; }
 -	else if(pinput>input && c=='\x1b' && input[0]=='\r') { insert(found,input+1,(pinput-input)-1); pinput=input; }
 -	else if(c=='\x1b') { pinput=input; }
@@ -257,6 +272,7 @@
 >loadfile
 >savefile
 >insert
+>erase
 >input
 >search
 >display
