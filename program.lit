@@ -52,13 +52,13 @@
 -	if(!found) return;
 -	if(!founde) return;
 
--	memmove(found,founde,texte-founde);
--	int ifound=found-text;
--	int size=ifound+(texte-founde);
+-	char *s=pfound?pfound:found;
+-	memmove(s,founde,texte-founde);
+-	int is=s-text;
+-	int size=is+(texte-founde);
 -	text=realloc(text,size);
 -	texte=text+size;
--	searchpoint=found=founde=text+ifound;
--	pfound=0;
+-	searchpoint=found=founde=text+is;
 -}
 
 
