@@ -84,6 +84,20 @@
 
 -void display(void) {
 -	char *p=text;
+
+-	if(found) {
+		Scroll back from found so line will be at the 10th line of screen
+
+-		p=found;
+-		int n=10;
+-		for(;p>text;p--) {
+-			if(*p=='\n') {
+-				n--;
+-				if(n==0) { p++; break; }
+-			}
+-		}
+-	}
+
 -	clear();
 -	int y;
 -	int tab=0;
@@ -101,7 +115,7 @@
 -				c=' ';
 -				tab--;
 -			} else {
--				if(!(p<texte)) return;
+-				if(!(p<texte)) goto exit;
 
 -				if(p==found && insert_idx < pinput-input) {
 -					c=input[insert_idx++];
@@ -138,6 +152,7 @@
 
 	Display what is typed
 
+-	exit:
 -	write(STDOUT_FILENO,CSI "0m",4);
 -	write(STDOUT_FILENO,"\r\n",2);
 -	if(pinput>input) {
