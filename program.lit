@@ -1,4 +1,28 @@
 
+		Insertion
+
+
+=insert
+-void insert(char *at, char *what, int len) {
+-	int offset=at-text;
+-	int size=texte-text;
+
+-	char *p=realloc(text,size+len);
+-	at=p+offset;
+-	
+-	memmove(at+len,at,size-offset);
+-	memmove(at,what,len);
+
+-	text=p;
+-	texte=text+size+len;
+-	found=0;
+-	founde=0;
+-	pfound=0;
+
+-}
+
+
+
 		Load file
 
 =loadfile
@@ -13,7 +37,7 @@
 
 -	int rest=st.st_size;
 
--	text=realloc(text,rest);
+-	text=realloc(text,rest+1+sizeof(void *));
 -	char *p=text;
 -	while(rest>0) {
 -		rest-=READSIZE;
@@ -173,6 +197,7 @@
 -	if(c=='\x03') die();
 -	if(c=='\x7f') { pinput--; }
 -	else if(pinput>input && c=='\r' && input[0]!='\r') { pinput=input; }
+-	else if(pinput>input && c=='\x1b' && input[0]=='\r') { insert(found,input+1,(pinput-input)-1); pinput=input; }
 -	else if(c=='\x1b') { pinput=input; }
 -	else { *pinput++=c; }
 -	search();
@@ -187,6 +212,7 @@
 
 >termios
 >loadfile
+>insert
 >input
 >search
 >display
