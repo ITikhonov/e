@@ -216,8 +216,9 @@
 
 -	char *fm=0;
 -	int tail=0;
+-	char *end=texte;
 
--	for(;p<texte;p++) {
+-	again: for(;p<end;p++) {
 -		if(*p=='\n') {
 -			fm=0;
 -			cm0=cm=s;
@@ -243,6 +244,8 @@
 
 -	}
 
+-	if(searchpoint && end!=searchpoint) { p=text; end=searchpoint; goto again; }
+
 -}
 
 		Keyboard input
@@ -259,6 +262,7 @@
 -	else if(pinput>input && c=='\r' && input[0]!='\r') { searchpoint=founde; pinput=input; }
 -	else if(pinput>input && c=='\x1b' && input[0]=='\r') { insert(found,input+1,(pinput-input)-1); pinput=input; }
 -	else if(c=='\x1b') { pinput=input; }
+-	else if(pinput>input && c=='\r' && input[0]=='\r') { *pinput++='\n'; }
 -	else { *pinput++=c; }
 -	search();
 -}
