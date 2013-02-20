@@ -13,6 +13,7 @@
 
 -char input[1024];
 -char *pinput=input;
+-char afterinput=0;
 
 
 		Save file
@@ -46,16 +47,14 @@
 -	int offset=at-preview.s;
 -	int size=preview.e-preview.s;
 
--	char *p=realloc(preview.s,size+len);
--	at=p+offset;
+-	preview.s=realloc(preview.s,size+len);
+-	preview.from=preview.s+offset;
 -	
--	memmove(at+len,at,size-offset);
--	memmove(at,what,len);
+-	memmove(preview.from+len,preview.from,size-offset);
+-	memmove(preview.from,what,len);
 
--	preview.from=p+(at-preview.s);
--	preview.to=preview.from+len;
--	preview.s=p;
 -	preview.e=preview.s+size+len;
+-	preview.to=preview.from+len;
 -}
 
 -void insert(void) {
@@ -64,6 +63,13 @@
 
 -void append(void) {
 -	insertat(preview.to,input+1,(pinput-input)-1);
+-	afterinput='.';
+-}
+
+-void nlappend(void) {
+-	insertat(preview.to++,"\n",1);
+-	append();
+-	afterinput='.';
 -}
 
 		Erase
@@ -215,9 +221,11 @@
 	Apply commands
 
 -	if(pinput==input) return;
+-	afterinput=0;
 -	switch(input[0]) {
--	case '<': append(); break;
+-	case '<': insert(); break;
 -	case ',': append(); break;
+-	case '.': nlappend(); break;
 -	default: search();
 -	}
 -}
@@ -249,7 +257,7 @@
  	if(c=='\x13') { savefile(); return; }
 
 -	if(c=='\x7f') { if(pinput>input) pinput--; }
--	else if(c=='\r') { pinput=input; copydisplay(&source,&preview); }
+-	else if(c=='\r') { pinput=input; copydisplay(&source,&preview); if(afterinput) *pinput++=afterinput; }
 -	else if(c=='\x1b') { pinput=input; }
 -	else { *pinput++=c; }
 -}
