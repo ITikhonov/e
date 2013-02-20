@@ -97,6 +97,7 @@
 =erase
 -void erase(void) {
 -	memmove(preview.from,preview.to,preview.e-preview.to);
+-	preview.e-=preview.to-preview.from;
 -	preview.to=preview.from;
 -}
 
