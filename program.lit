@@ -203,8 +203,6 @@
 
 =decl
 -void copydisplay(struct display *to,struct display *from);
--void search(void);
--void tailsearch(void);
 -void bakepreview(void);
 
 =bakepreview
@@ -233,23 +231,34 @@
 -	}
 -}
 
+		Search
 
+=decl
+-void search(void);
+-void tailsearch(void);
+
+=search
 -void search(void) {
--	char *start=preview.from?preview.from:preview.s;
--	char *p=start+1;
--	for(;;p++) {
--		if(p>preview.e-(pinput-input)) {
--			if(start>=p) break;
--			p=preview.s;
--		}
--		if(p==start) break;
+-	struct re_pattern_buffer pat;
+-	memset(&pat,0,sizeof(pat));
+-	re_compile_pattern(input,pinput-input,&pat);
 
--		if(memcmp(p,input,pinput-input)==0) {
--			preview.from=p;
--			preview.to=p+(pinput-input);
--			break;
--		}
+-	char *start=preview.from?preview.from:preview.s;
+-	struct re_registers regs;
+-	if(-1 != re_search(&pat, start,preview.e-start, 0,INT_MAX, &regs)) {
+-		preview.from=start+regs.start[0];
+-		preview.to=start+regs.end[0];
+-		return;
 -	}
+
+	Search another half from begining.
+
+-	if(-1 != re_search(&pat, preview.s,start-preview.s, 0,INT_MAX, &regs)) {
+-		preview.from=preview.s+regs.start[0];
+-		preview.to=preview.s+regs.end[0];
+-		return;
+-	}
+
 -}
 
 -void tailsearch(void) {
@@ -296,6 +305,7 @@
 >insert
 >erase
 >input
+>search
 >bakepreview
 >display
 
