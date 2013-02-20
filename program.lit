@@ -204,6 +204,7 @@
 =decl
 -void copydisplay(struct display *to,struct display *from);
 -void search(void);
+-void tailsearch(void);
 -void bakepreview(void);
 
 =bakepreview
@@ -227,6 +228,7 @@
 -	case ',': append(); break;
 -	case '.': nlappend(); break;
 -	case '=': replace(); break;
+-	case '-': tailsearch(); break;
 -	default: search();
 -	}
 -}
@@ -249,6 +251,22 @@
 -		}
 -	}
 -}
+
+-void tailsearch(void) {
+-	char *start=preview.to?preview.to:preview.s;
+-	char *p=start+1;
+-	for(;;p++) {
+-		if(p>preview.e-((pinput-input)-1)) {
+-			break;
+-		}
+
+-		if(memcmp(p,input+1,(pinput-input)-1)==0) {
+-			preview.to=p+((pinput-input)-1);
+-			break;
+-		}
+-	}
+-}
+
 
 		Keyboard input
 
