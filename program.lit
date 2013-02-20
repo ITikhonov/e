@@ -1,3 +1,17 @@
+		Data
+
+=data
+-struct display {
+-	char *s;
+-	char *e;
+-	char *from;
+-	char *to;
+-};
+
+-struct display backup = {0,0,0,0};
+-struct display text = {0,0,0,0};
+
+
 		Save file
 
 =includes
@@ -9,11 +23,11 @@
 -	int f=mkstemp(tmp);
 -
 -	int i;
--	int size=texte-text;
+-	int size=text.e-text.s;
 -	for(i=0;i<size;) {
 -		int n=size-i;
 -		if(n>10240) n=10240;
--		int r=write(f,text+i,n);
+-		int r=write(f,text.s+i,n);
 -		if(r<0) die(); // FIXME: not really should we die
 -		i+=r;
 -	}
@@ -65,8 +79,6 @@
 		Load file
 
 =loadfile
--char *text=0;
--char *texte=0;
 -#define READSIZE (10240)
 
 -char *filename=0;
@@ -78,8 +90,8 @@
 
 -	int rest=st.st_size;
 
--	text=realloc(text,rest+1+sizeof(void *));
--	char *p=text;
+-	text.s=realloc(text.s,rest+1+sizeof(void *));
+-	char *p=text.s;
 -	while(rest>0) {
 -		rest-=READSIZE;
 -		int toread=rest>0?READSIZE:(READSIZE+rest);
@@ -87,7 +99,7 @@
 -		if(r!=toread) die();
 -		p+=toread;
 -	}
--	texte=p;
+-	text.e=p;
 -	close(f);
 -}
 
@@ -99,14 +111,14 @@
 -void clear() { write(STDOUT_FILENO,CSI "H" CSI "2J",7); }
 
 -void display(void) {
--	char *p=text;
+-	char *p=text.s;
 
--	if(found) {
+-	if(text.from) {
 		Scroll back from found so line will be at the 10th line of screen
 
--		p=found;
+-		p=text.from;
 -		int n=10;
--		for(;p>text;p--) {
+-		for(;p>text.s;p--) {
 -			if(*p=='\n') {
 -				n--;
 -				if(n==0) { p++; break; }
@@ -119,26 +131,19 @@
 -	int tab=0;
 
 -	int highlight=0;
--	unsigned int insert_idx=(pinput>input && input[0]=='\r')?1:-1;
 
 -	for(y=0;y<win.ws_row-5;y++) {
 -		int x=0;
 -		for(;;) {
--			int inside=(p>=(pfound?pfound:found) && p<founde);
+-			int inside=(p>=text.from && p<text.to);
 
 -			char c;
 -			if(tab) {
 -				c=' ';
 -				tab--;
 -			} else {
--				if(!(p<texte)) goto exit;
-
--				if(p==found && insert_idx < pinput-input) {
--					c=input[insert_idx++];
--					if(c=='\r') c='\n';
--				} else {
--					c=*p++;
--				}
+-				if(!(p<text.e)) goto exit;
+-				c=*p++;
 -			}
 
 -			if(c=='\t') { tab=8; continue; }
@@ -147,7 +152,7 @@
 
 				Highlight search mark.
 
--				if(found) {
+-				if(text.from) {
 -					if(highlight) {
 -						if(!inside) { highlight=0; write(STDOUT_FILENO,CSI "0m",4); }
 -					} else {
@@ -172,80 +177,22 @@
 -	write(STDOUT_FILENO,CSI "0m",4);
 -	write(STDOUT_FILENO,"\r\n",2);
 -	if(pinput>input) {
--		if(input[0]=='\r') {
--			write(STDOUT_FILENO,"e: ",3);
--			write(STDOUT_FILENO,input+1,(pinput-input)-1);
--		} else {
--			write(STDOUT_FILENO,"s: ",3);
--			write(STDOUT_FILENO,input,pinput-input);
--		}
+-		write(STDOUT_FILENO,": ",3);
+-		write(STDOUT_FILENO,input,pinput-input);
 -	}
 -	
 -}
 
-		Search
+		Preview
+
+	While typing a command we bake preview by making a copy of
+	content and applying command to it.
 
 =decl
--char *pfound=0;
--char *found=0;
--char *founde=0;
--char *searchpoint=0;
+-void preview(void);
 
--void search(void);
-
-=search
-
--void search(void) {
-
-	Loop throught each space-separated word.
-
--	char *s;
--	char *p;
-
--	if(*input==' ') {
--		s=input+1;
--		p=searchpoint?searchpoint:text;
--	} else {
--		s=input;
--		p=text;
--		pfound=0;
--	}
-
--	char *cm0=s;
--	char *cm=s;
-
--	char *fm=0;
--	int tail=0;
--	char *end=texte;
-
--	again: for(;p<end;p++) {
--		if(*p=='\n') {
--			fm=0;
--			cm0=cm=s;
--		}
--		if(*p==*cm) {
--			cm++;
-
--			if(cm==pinput) {
--				found=fm?fm:(p-(cm-cm0)+1);
--				founde=p+1;
--				return;
--			}
-
-			We do not need to match spaces, they
-			separate tokens.
-
--			if(*cm==' ') { if(!fm) fm=p-(cm-cm0-1); cm++; cm0=cm; }
--			if(*cm==' ') { cm++; s=cm0=cm; if(!tail) pfound=0; fm=0; }
--			if(*cm=='\t') { pfound=fm?fm:(p-(cm-cm0-1)); cm++; s=cm0=cm; tail=1; fm=0; }
--		} else {
--			cm=cm0;
--		}
-
--	}
-
--	if(searchpoint && end!=searchpoint) { p=text; end=searchpoint; goto again; }
-
+=preview
+-void preview(void) {
 -}
 
 		Keyboard input
@@ -256,15 +203,13 @@
 
 -void key(char c) {
 -	if(c=='\x03') die();
--	if(c=='\x13') { savefile(); return; }
+ 	if(c=='\x13') { savefile(); return; }
 
--	if(c=='\x7f') { if(pinput==input) { erase(); } else { pinput--; } }
--	else if(pinput>input && c=='\r' && input[0]!='\r') { searchpoint=founde; pinput=input; }
--	else if(pinput>input && c=='\x1b' && input[0]=='\r') { insert(found,input+1,(pinput-input)-1); pinput=input; }
+-	if(c=='\x7f') { if(pinput>input) pinput--; }
+-	else if(c=='\r') { pinput=input; }
 -	else if(c=='\x1b') { pinput=input; }
--	else if(pinput>input && c=='\r' && input[0]=='\r') { *pinput++='\n'; }
 -	else { *pinput++=c; }
--	search();
+-	preview();
 -}
 
 		Main loop
@@ -274,13 +219,15 @@
 
 >decl
 
+>data
+
 >termios
 >loadfile
->savefile
->insert
->erase
+ >savefile
+ >insert
+ >erase
 >input
->search
+>preview
 >display
 
 -int main(int argc, char *argv[]) {
