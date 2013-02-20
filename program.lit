@@ -76,17 +76,16 @@
 
 =erase
 -void erase(void) {
--	if(!found) return;
--	if(!founde) return;
-
--	char *s=pfound?pfound:found;
--	memmove(s,founde,texte-founde);
--	int is=s-text;
--	int size=is+(texte-founde);
--	text=realloc(text,size);
--	texte=text+size;
--	searchpoint=found=founde=text+is;
+-	memmove(preview.from,preview.to,preview.e-preview.to);
+-	preview.to=preview.from;
 -}
+
+-void replace(void) {
+-	erase();
+-	append();
+-	afterinput='.';
+-}
+
 
 
 		Load file
@@ -226,6 +225,7 @@
 -	case '<': insert(); break;
 -	case ',': append(); break;
 -	case '.': nlappend(); break;
+-	case '-': replace(); break;
 -	default: search();
 -	}
 -}
@@ -275,7 +275,7 @@
 >loadfile
  >savefile
 >insert
- >erase
+>erase
 >input
 >bakepreview
 >display
