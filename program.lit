@@ -273,7 +273,7 @@
 =input
 -void key(char c) {
 -	if(c=='\x03') die();
- 	if(c=='\x13') { savefile(); return; }
+- 	if(c=='\x13') { savefile(); return; }
 
 -	if(c=='\x7f') { if(pinput>input) pinput--; }
 -	else if(c=='\r') { pinput=input; copydisplay(&source,&preview); if(afterinput) *pinput++=afterinput; }
@@ -292,7 +292,7 @@
 
 >termios
 >loadfile
- >savefile
+>savefile
 >insert
 >erase
 >input
