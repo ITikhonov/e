@@ -15,6 +15,8 @@
 -char *pinput=input;
 -char afterinput=0;
 
+-char *info=0;
+
 
 		Save file
 
@@ -193,6 +195,11 @@
 -		write(STDOUT_FILENO,": ",3);
 -		write(STDOUT_FILENO,input,pinput-input);
 -	}
+-
+-	if(info) {
+-		write(STDOUT_FILENO,"\r\n",2);
+-		write(STDOUT_FILENO,info,strlen(info));
+-	}
 -	
 -}
 
@@ -241,7 +248,7 @@
 -void search(void) {
 -	struct re_pattern_buffer pat;
 -	memset(&pat,0,sizeof(pat));
--	re_compile_pattern(input,pinput-input,&pat);
+-	if(re_compile_pattern(input,pinput-input,&pat)) return;
 
 -	char *start=preview.from?preview.from:preview.s;
 -	struct re_registers regs;
@@ -262,18 +269,25 @@
 -}
 
 -void tailsearch(void) {
--	char *start=preview.to?preview.to:preview.s;
--	char *p=start+1;
--	for(;;p++) {
--		if(p>preview.e-((pinput-input)-1)) {
--			break;
--		}
-
--		if(memcmp(p,input+1,(pinput-input)-1)==0) {
--			preview.to=p+((pinput-input)-1);
--			break;
--		}
+-	struct re_pattern_buffer pat;
+-	memset(&pat,0,sizeof(pat));
+-	if(re_compile_pattern(input+1,(pinput-input)-1,&pat)) {
+-		info="incorrect regex";
+-		return;
 -	}
+
+-	char *start=preview.to?preview.to:preview.s;
+-	if(start==preview.e) return;
+-	start+=1;
+
+-	struct re_registers regs={.num_regs=0};
+-	if(-1 != re_search(&pat, start,preview.e-start, 0,INT_MAX, &regs)) {
+-		preview.to=start+regs.end[pat.re_nsub];
+-		info=0;
+-		return;
+-	}
+-	info="nothing found";
+
 -}
 
 
@@ -318,6 +332,7 @@
 -	filename=argv[1];
 -	loadfile();
 -	initterm();
+-	re_set_syntax(RE_SYNTAX_EGREP);
 -	for(;;) {
 -		bakepreview();
 -		display();
