@@ -59,6 +59,7 @@
 
 -void insert(void) {
 -	insertat(preview.from,input+1,(pinput-input)-1);
+-	afterinput='.';
 -}
 
 -void append(void) {
