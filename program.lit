@@ -252,6 +252,7 @@
 -	case '.': nlappend(); break;
 -	case '=': replace(); break;
 -	case '-': tailsearch(); break;
+-	case '?': backsearch(); break;
 -	case '@': paste(); break;
 -	case '!': yank(); break;
 -	default: search();
@@ -285,6 +286,27 @@
 -		preview.to=preview.s+regs.end[0];
 -		return;
 -	}
+
+-}
+
+-void backsearch(void) {
+-	struct re_pattern_buffer pat;
+-	memset(&pat,0,sizeof(pat));
+-	if(re_compile_pattern(input+1,(pinput-input)-1,&pat)) {
+-		info="incorrect regex";
+-		return;
+-	}
+
+-	char *start=preview.from?preview.from:preview.e;
+-	if(start==preview.s) start=preview.e;
+
+-	struct re_registers regs={.num_regs=0};
+-	if(-1 != re_search(&pat, preview.s,start-preview.s, (start-preview.s)-1,INT_MIN, &regs)) {
+-		preview.from=preview.s+regs.start[pat.re_nsub];
+-		info=0;
+-		return;
+-	}
+-	info="nothing found";
 
 -}
 
