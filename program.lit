@@ -8,8 +8,11 @@
 -	char *to;
 -};
 
--struct display backup = {0,0,0,0};
--struct display text = {0,0,0,0};
+-struct display source = {0,0,0,0};
+-struct display preview = {0,0,0,0};
+
+-char input[1024];
+-char *pinput=input;
 
 
 		Save file
@@ -23,11 +26,11 @@
 -	int f=mkstemp(tmp);
 -
 -	int i;
--	int size=text.e-text.s;
+-	int size=preview.e-preview.s;
 -	for(i=0;i<size;) {
 -		int n=size-i;
 -		if(n>10240) n=10240;
--		int r=write(f,text.s+i,n);
+-		int r=write(f,preview.s+i,n);
 -		if(r<0) die(); // FIXME: not really should we die
 -		i+=r;
 -	}
@@ -38,25 +41,29 @@
 
 		Insertion
 
-
 =insert
--void insert(char *at, char *what, int len) {
--	int offset=at-text;
--	int size=texte-text;
+-void insertat(char *at, char *what, int len) {
+-	int offset=at-preview.s;
+-	int size=preview.e-preview.s;
 
--	char *p=realloc(text,size+len);
+-	char *p=realloc(preview.s,size+len);
 -	at=p+offset;
 -	
 -	memmove(at+len,at,size-offset);
 -	memmove(at,what,len);
 
--	text=p;
--	texte=text+size+len;
--	found=0;
--	founde=0;
--	pfound=0;
--	searchpoint=0;
+-	preview.from=p+(at-preview.s);
+-	preview.to=preview.from+len;
+-	preview.s=p;
+-	preview.e=preview.s+size+len;
+-}
 
+-void insert(void) {
+-	insertat(preview.from,input+1,(pinput-input)-1);
+-}
+
+-void append(void) {
+-	insertat(preview.to,input+1,(pinput-input)-1);
 -}
 
 		Erase
@@ -90,8 +97,8 @@
 
 -	int rest=st.st_size;
 
--	text.s=realloc(text.s,rest+1+sizeof(void *));
--	char *p=text.s;
+-	source.s=realloc(source.s,rest+1+sizeof(void *));
+-	char *p=source.s;
 -	while(rest>0) {
 -		rest-=READSIZE;
 -		int toread=rest>0?READSIZE:(READSIZE+rest);
@@ -99,7 +106,7 @@
 -		if(r!=toread) die();
 -		p+=toread;
 -	}
--	text.e=p;
+-	source.e=p;
 -	close(f);
 -}
 
@@ -111,14 +118,14 @@
 -void clear() { write(STDOUT_FILENO,CSI "H" CSI "2J",7); }
 
 -void display(void) {
--	char *p=text.s;
+-	char *p=preview.s;
 
--	if(text.from) {
+-	if(preview.from) {
 		Scroll back from found so line will be at the 10th line of screen
 
--		p=text.from;
+-		p=preview.from;
 -		int n=10;
--		for(;p>text.s;p--) {
+-		for(;p>preview.s;p--) {
 -			if(*p=='\n') {
 -				n--;
 -				if(n==0) { p++; break; }
@@ -135,14 +142,14 @@
 -	for(y=0;y<win.ws_row-5;y++) {
 -		int x=0;
 -		for(;;) {
--			int inside=(p>=text.from && p<text.to);
+-			int inside=(p>=preview.from && p<preview.to);
 
 -			char c;
 -			if(tab) {
 -				c=' ';
 -				tab--;
 -			} else {
--				if(!(p<text.e)) goto exit;
+-				if(!(p<preview.e)) goto exit;
 -				c=*p++;
 -			}
 
@@ -152,7 +159,7 @@
 
 				Highlight search mark.
 
--				if(text.from) {
+-				if(preview.from) {
 -					if(highlight) {
 -						if(!inside) { highlight=0; write(STDOUT_FILENO,CSI "0m",4); }
 -					} else {
@@ -189,27 +196,62 @@
 	content and applying command to it.
 
 =decl
--void preview(void);
+-void copydisplay(struct display *to,struct display *from);
+-void search(void);
+-void bakepreview(void);
 
-=preview
--void preview(void) {
+=bakepreview
+-void copydisplay(struct display *to,struct display *from) {
+-	to->s=realloc(to->s,from->e-from->s);
+-	memmove(to->s,from->s,from->e-from->s);
+-	to->e=to->s+(from->e-from->s);
+-	to->from=from->from?to->s+(from->from-from->s):0;
+-	to->to=from->to?to->s+(from->to-from->s):0;
+-}
+
+-void bakepreview(void) {
+-	copydisplay(&preview,&source);
+
+	Apply commands
+
+-	if(pinput==input) return;
+-	switch(input[0]) {
+-	case '<': append(); break;
+-	case ',': append(); break;
+-	default: search();
+-	}
+-}
+
+
+-void search(void) {
+-	char *start=preview.from?preview.from:preview.s;
+-	char *p=start+1;
+-	for(;;p++) {
+-		if(p>preview.e-(pinput-input)) {
+-			if(start>=p) break;
+-			p=preview.s;
+-		}
+-		if(p==start) break;
+
+-		if(memcmp(p,input,pinput-input)==0) {
+-			preview.from=p;
+-			preview.to=p+(pinput-input);
+-			break;
+-		}
+-	}
 -}
 
 		Keyboard input
 
 =input
--char input[1024];
--char *pinput=input;
-
 -void key(char c) {
 -	if(c=='\x03') die();
  	if(c=='\x13') { savefile(); return; }
 
 -	if(c=='\x7f') { if(pinput>input) pinput--; }
--	else if(c=='\r') { pinput=input; }
+-	else if(c=='\r') { pinput=input; copydisplay(&source,&preview); }
 -	else if(c=='\x1b') { pinput=input; }
 -	else { *pinput++=c; }
--	preview();
 -}
 
 		Main loop
@@ -217,17 +259,17 @@
 =>e.c
 >includes
 
+>data
 >decl
 
->data
 
 >termios
 >loadfile
  >savefile
- >insert
+>insert
  >erase
 >input
->preview
+>bakepreview
 >display
 
 -int main(int argc, char *argv[]) {
@@ -240,6 +282,7 @@
 -	loadfile();
 -	initterm();
 -	for(;;) {
+-		bakepreview();
 -		display();
 
 -		char c;
