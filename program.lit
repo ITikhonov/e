@@ -226,7 +226,7 @@
 -	case '<': insert(); break;
 -	case ',': append(); break;
 -	case '.': nlappend(); break;
--	case '-': replace(); break;
+-	case '=': replace(); break;
 -	default: search();
 -	}
 -}
