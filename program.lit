@@ -255,7 +255,11 @@
 -	case '?': backsearch(); break;
 -	case '@': paste(); break;
 -	case '!': yank(); break;
--	default: search();
+-	case '/': search(); break;
+-	default:
+-		*pinput++=input[0];
+-		input[0]='/';
+-		search();
 -	}
 -}
 
@@ -269,7 +273,7 @@
 -void search(void) {
 -	struct re_pattern_buffer pat;
 -	memset(&pat,0,sizeof(pat));
--	if(re_compile_pattern(input,pinput-input,&pat)) return;
+-	if(re_compile_pattern(input+1,(pinput-input)-1,&pat)) return;
 
 -	char *start=preview.from?preview.from:preview.s;
 -	struct re_registers regs;
