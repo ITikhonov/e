@@ -17,6 +17,23 @@
 
 -char *info=0;
 
+-char *yankdata=0;
+-int yanksize;
+
+		Yank and Paste
+
+=yankpaste
+-void yank(void) {
+-	if(!preview.from) return;
+-	yanksize=preview.to-preview.from;
+-	yankdata=realloc(yankdata,yanksize);
+-	memmove(yankdata,preview.from,yanksize);
+-}
+
+-void paste(void) {
+-	insertat(preview.to,yankdata,yanksize);
+-}
+
 
 		Save file
 
@@ -234,6 +251,8 @@
 -	case '.': nlappend(); break;
 -	case '=': replace(); break;
 -	case '-': tailsearch(); break;
+-	case '@': paste(); break;
+-	case '!': yank(); break;
 -	default: search();
 -	}
 -}
@@ -318,6 +337,7 @@
 >savefile
 >insert
 >erase
+>yankpaste
 >input
 >search
 >bakepreview
