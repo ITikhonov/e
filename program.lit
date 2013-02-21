@@ -163,7 +163,7 @@
 -	int y;
 -	int tab=0;
 
--	int highlight=0;
+-	int hlstate=0;
 
 -	for(y=0;y<win.ws_row-5;y++) {
 -		int x=0;
@@ -174,25 +174,31 @@
 -			if(tab) {
 -				c=' ';
 -				tab--;
+-				if(tab==0) p++;
 -			} else {
 -				if(!(p<preview.e)) goto exit;
 -				c=*p++;
 -			}
 
--			if(c=='\t') { tab=8; continue; }
+-			if(c=='\t') { p--; tab=8; continue; }
 -			if(c=='\n') break;
 -			if(x<win.ws_col-5) {
 
 				Highlight search mark.
 
 -				if(preview.from) {
--					if(highlight) {
--						if(!inside) { highlight=0; write(STDOUT_FILENO,CSI "0m",4); }
--					} else {
--						if(inside) { highlight=1; write(STDOUT_FILENO,CSI "0m" CSI "01;31m",12); }
+-					int newhlstate=0;
+-					if(inside) newhlstate=c==' '?2:1;
+
+-					if(hlstate!=newhlstate) {
+-						switch(newhlstate) {
+-							case 0:	write(STDOUT_FILENO,CSI "0m",4); break;
+-							case 1: write(STDOUT_FILENO,CSI "0m" CSI "44m",9); break;
+-							case 2: write(STDOUT_FILENO,CSI "0m" CSI "44m",9); break;
+-						}
+-						hlstate=newhlstate;
 -					}
 -				}
-
 -				write(STDOUT_FILENO,&c,1);
 
 -				x++;
