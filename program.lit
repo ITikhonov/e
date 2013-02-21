@@ -167,7 +167,8 @@
 
 -	for(y=0;y<win.ws_row-5;y++) {
 -		int x=0;
--		for(;;) {
+-		int end=0;
+-		for(;!end;) {
 -			int inside=(p>=preview.from && p<preview.to);
 
 -			char c;
@@ -181,7 +182,7 @@
 -			}
 
 -			if(c=='\t') { p--; tab=8; continue; }
--			if(c=='\n') break;
+-			if(c=='\n') { end=1; c=' '; }
 -			if(x<win.ws_col-5) {
 
 				Highlight search mark.
@@ -283,17 +284,19 @@
 
 -	char *start=preview.from?preview.from:preview.s;
 -	struct re_registers regs;
--	if(-1 != re_search(&pat, start,preview.e-start, 0,INT_MAX, &regs)) {
--		preview.from=start+regs.start[0];
--		preview.to=start+regs.end[0];
+-	if(-1 != re_search(&pat, preview.s,preview.e-preview.s, start-preview.s+1,preview.e-start, &regs)) {
+-		preview.from=preview.s+regs.start[0];
+-		preview.to=preview.s+regs.end[0];
+-		if(preview.from==preview.to) preview.to++;
 -		return;
 -	}
 
 	Search another half from begining.
 
--	if(-1 != re_search(&pat, preview.s,start-preview.s, 0,INT_MAX, &regs)) {
+-	if(-1 != re_search(&pat, preview.s,preview.e-preview.s, 0,start-preview.s, &regs)) {
 -		preview.from=preview.s+regs.start[0];
 -		preview.to=preview.s+regs.end[0];
+-		if(preview.from==preview.to) preview.to++;
 -		return;
 -	}
 
@@ -311,8 +314,10 @@
 -	if(start==preview.s) start=preview.e;
 
 -	struct re_registers regs={.num_regs=0};
--	if(-1 != re_search(&pat, preview.s,start-preview.s, (start-preview.s)-1,INT_MIN, &regs)) {
+-	if(-1 != re_search(&pat, preview.s,start-preview.s, (start-preview.s)-1,preview.s-start, &regs)) {
 -		preview.from=preview.s+regs.start[pat.re_nsub];
+-		preview.to=preview.s+regs.end[pat.re_nsub];
+-		if(preview.from==preview.to) preview.to++;
 -		info=0;
 -		return;
 -	}
@@ -333,13 +338,29 @@
 -	start+=1;
 
 -	struct re_registers regs={.num_regs=0};
--	if(-1 != re_search(&pat, start,preview.e-start, 0,INT_MAX, &regs)) {
--		preview.to=start+regs.end[pat.re_nsub];
+-	if(-1 != re_search(&pat, preview.s,preview.e-preview.s, start-preview.s,preview.e-start, &regs)) {
+-		preview.to=preview.s+regs.end[pat.re_nsub];
+-		if(preview.from==preview.to) preview.to++;
 -		info=0;
 -		return;
 -	}
 -	info="nothing found";
 
+-}
+
+		Repeating command
+
+=repeat
+-char inputcopy[1024];
+-char *pinputcopy=inputcopy;
+-void copyinput(void) {
+-	memmove(inputcopy,input,1024);
+-	pinputcopy=pinput;
+-}
+
+-void repeat() {
+-	memmove(input,inputcopy,1024);
+-	pinput=pinputcopy;
 -}
 
 
@@ -351,7 +372,8 @@
 - 	if(c=='\x13') { savefile(); return; }
 
 -	if(c=='\x7f') { if(pinput>input) pinput--; }
--	else if(c=='\r') { pinput=input; copydisplay(&source,&preview); if(afterinput) *pinput++=afterinput; }
+-	else if(c=='\r' && pinput==input) { repeat(); }
+-	else if(c=='\r') { copyinput(); pinput=input; copydisplay(&source,&preview); if(afterinput) *pinput++=afterinput; }
 -	else if(c=='\x1b') { pinput=input; }
 -	else { *pinput++=c; }
 -}
@@ -371,6 +393,7 @@
 >insert
 >erase
 >yankpaste
+>repeat
 >input
 >search
 >bakepreview
