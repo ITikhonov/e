@@ -19,6 +19,7 @@
 
 -char *yankdata=0;
 -int yanksize;
+-int offset=0;
 
 		Yank and Paste
 
@@ -34,6 +35,12 @@
 -	insertat(preview.to,yankdata,yanksize);
 -}
 
+
+		Scroll
+
+=scroll
+-void pageup(void) { offset-=win.ws_row*2/3; }
+-void pagedown(void) { offset+=win.ws_row*2/3; }
 
 		Save file
 
@@ -139,6 +146,7 @@
 		Display
 
 =display
+
 -#define CSI "\x1b["
 
 -void clear() { write(STDOUT_FILENO,CSI "H" CSI "2J",7); }
@@ -150,11 +158,13 @@
 		Scroll back from found so line will be at the 10th line of screen
 
 -		p=preview.from;
--		int n=10;
--		for(;p>preview.s;p--) {
--			if(*p=='\n') {
--				n--;
--				if(n==0) { p++; break; }
+-		int n=-10+offset;
+-		if(n<0) {
+-			for(;p>preview.s;p--) {
+-				if(*p=='\n') {
+-					n++;
+-					if(n==0) { p++; break; }
+-				}
 -			}
 -		}
 -	}
@@ -382,9 +392,12 @@
 		Keyboard input
 
 =input
--void key(char c) {
+-void key(char c,char *rest) {
 -	if(c=='\x03') die();
-- 	if(c=='\x13') { savefile(); return; }
+-	if(c=='\x13') { savefile(); return; }
+-	if(c=='\x1b' && rest[0]=='[' && rest[1]=='5' && rest[2]=='~') { pageup(); return; }
+-	if(c=='\x1b' && rest[0]=='[' && rest[1]=='6' && rest[2]=='~') { pagedown(); return; }
+-	offset=0;
 
 -	if(c=='\x7f') { if(pinput>input) pinput--; }
 -	else if(c=='\r' && pinput==input) { repeat(); }
@@ -409,6 +422,7 @@
 >erase
 >yankpaste
 >repeat
+>scroll
 >input
 >command
 >search
@@ -428,9 +442,9 @@
 -		bakepreview();
 -		display();
 
--		char c;
--		if(read(STDIN_FILENO,&c,1)==-1) die();
--		key(c);
+-		char buf[16];
+-		if(read(STDIN_FILENO,&buf,16)==-1) die();
+-		key(buf[0],buf+1);
 -	}
 -}
 
@@ -495,7 +509,7 @@
 -		r=read(STDIN_FILENO,&c,16);
 -		if(r==-1) die();
 -		for(i=0;i<r;i++) {
--			printf("'%c' %02x",c[i],c[i]);
+-			printf("'%c' %02x | ",c[i],c[i]);
 -		}
 -		printf("\r\n");
 -		if(c[0]=='\x03') { q++; } else { q=0; }
