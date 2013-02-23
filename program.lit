@@ -263,10 +263,25 @@
 -	case '@': paste(); break;
 -	case '!': yank(); break;
 -	case '/': search(); break;
+-	case '`': command(); break;
 -	default:
 -		*pinput++=input[0];
 -		input[0]='/';
 -		search();
+-	}
+-}
+
+		Commands
+
+=decl
+-void command(void);
+
+=command
+-void command(void) {
+-	if(pinput-input<2) return;
+-	switch(input[1]) {
+-	case 'q': resetterm(); exit(0); break;
+-	case 's': savefile(); pinput=input; break;
 -	}
 -}
 
@@ -395,6 +410,7 @@
 >yankpaste
 >repeat
 >input
+>command
 >search
 >bakepreview
 >display
