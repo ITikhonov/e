@@ -394,6 +394,7 @@
 =input
 -void key(char c,char *rest) {
 -	if(c=='\x03') die();
+-	if(c=='\x1a') { suspend(); return; }
 -	if(c=='\x13') { savefile(); return; }
 -	if(c=='\x1b' && rest[0]=='[' && rest[1]=='5' && rest[2]=='~') { pageup(); return; }
 -	if(c=='\x1b' && rest[0]=='[' && rest[1]=='6' && rest[2]=='~') { pagedown(); return; }
@@ -464,6 +465,7 @@
 -#include <string.h>
 -#include <sys/ioctl.h>
 -#include <errno.h>
+-#include <signal.h>
 
 -#define __USE_GNU
 
@@ -490,6 +492,12 @@
 -
 -void resetterm() {
 -	tcsetattr(STDIN_FILENO,TCSANOW,&oldkey);
+-}
+
+-void suspend(void) {
+-	resetterm();
+-	kill(0,SIGSTOP);
+-	initterm();
 -}
 
 -void die(void) {
