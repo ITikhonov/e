@@ -490,10 +490,15 @@
 -	int q=0;
 -	initterm();
 -	for(;;) {
--		char c;
--		if(read(STDIN_FILENO,&c,1)==-1) die();
--		printf("char '%c' %02x\r\n",c,c);
--		if(c=='\x03') { q++; } else { q=0; }
+-		char c[16];
+-		int i,r;
+-		r=read(STDIN_FILENO,&c,16);
+-		if(r==-1) die();
+-		for(i=0;i<r;i++) {
+-			printf("'%c' %02x",c[i],c[i]);
+-		}
+-		printf("\r\n");
+-		if(c[0]=='\x03') { q++; } else { q=0; }
 -		if(q==3) die();
 -	}
 -}
