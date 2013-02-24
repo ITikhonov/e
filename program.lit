@@ -14,7 +14,7 @@
 -char input[1024];
 -char *pinput=input;
 -char afterinput=0;
-
+-int longcommand=0;
 -char *info=0;
 
 -char *yankdata=0;
@@ -41,6 +41,47 @@
 =scroll
 -void pageup(void) { offset-=win.ws_row*2/3; }
 -void pagedown(void) { offset+=win.ws_row*2/3; }
+
+		External filter
+
+	External filter command write selection into
+	temporary file, then creates pipe, forks,
+	sets stdin to that file in a child and runs
+	shell command. Parent deletes selection, then
+	reads from pipe till EOF, inserting what is read. After EOF
+	temporary file is deleted.
+
+=filter
+-void filter() {
+-	if(pinput[-1]!='\r') { longcommand=1; return; }
+
+-	char *p=preview.from;
+-	char s[]=".e.XXXXXX";
+-	int f=mkstemp(s);
+-	for(;;) {
+-		int towrite=preview.to-p;
+-		if(towrite>1024) towrite=1024;
+-		write(f,p,towrite);
+-		if(towrite<1024) break;
+-	}
+-	close(f);
+-	int pipes[2];
+-	pipe(pipes);
+-	if(fork()) {
+-		for(;;) {
+-			char buf[1024];
+-			int r=read(pipes[0],buf,sizeof(buf));
+-			if(r<=0) return;
+-			insertat(preview.e,buf,r);
+-		}
+-	} else {
+-		dup2(f,0);
+-		dup2(pipes[1],1);
+-		pinput[-1]='\0';
+-		execl("/bin/sh","/bin/sh","-c",input+1,(char*)0);
+-	}
+-	longcommand=0;
+-}
 
 		Save file
 
@@ -85,12 +126,10 @@
 
 -void insert(void) {
 -	insertat(preview.from,input+1,(pinput-input)-1);
--	afterinput='.';
 -}
 
 -void append(void) {
 -	insertat(preview.to,input+1,(pinput-input)-1);
--	afterinput='.';
 -}
 
 -void nlappend(void) {
@@ -111,7 +150,6 @@
 -void replace(void) {
 -	erase();
 -	append();
--	afterinput='.';
 -}
 
 
@@ -281,6 +319,7 @@
 -	case '!': yank(); break;
 -	case '/': search(); break;
 -	case '`': command(); break;
+-	case '#': filter(); break;
 -	default:
 -		*pinput++=input[0];
 -		input[0]='/';
@@ -408,6 +447,7 @@
 -	offset=0;
 
 -	if(c=='\x7f') { if(pinput>input) pinput--; }
+-	else if(c=='\r' && longcommand) { *pinput++=c; }
 -	else if(c=='\r' && pinput==input) { repeat(); }
 -	else if(c=='\r') { copyinput(); pinput=input; copydisplay(&source,&preview); if(afterinput) *pinput++=afterinput; }
 -	else if(c=='\x1b') { pinput=input; }
@@ -428,6 +468,7 @@
 >savefile
 >insert
 >erase
+>filter
 >yankpaste
 >repeat
 >scroll
