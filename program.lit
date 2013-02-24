@@ -64,15 +64,19 @@
 -		write(f,p,towrite);
 -		if(towrite<1024) break;
 -	}
--	close(f);
+-	lseek(f,0,SEEK_SET);
+-	
 -	int pipes[2];
 -	pipe(pipes);
 -	if(fork()) {
+-		erase();
+-		close(pipes[1]);
+-		close(f);
 -		for(;;) {
 -			char buf[1024];
 -			int r=read(pipes[0],buf,sizeof(buf));
--			if(r<=0) return;
--			insertat(preview.e,buf,r);
+-			if(r<=0) break;
+-			insertat(preview.to,buf,r);
 -		}
 -	} else {
 -		dup2(f,0);
@@ -81,6 +85,8 @@
 -		execl("/bin/sh","/bin/sh","-c",input+1,(char*)0);
 -	}
 -	longcommand=0;
+-	pinput=input;
+-	copydisplay(&source,&preview);
 -}
 
 		Save file
