@@ -166,6 +166,13 @@
 -					if(n==0) { p++; break; }
 -				}
 -			}
+-		} else {
+-			for(;p<preview.e;p++) {
+-				if(*p=='\n') {
+-					n--;
+-					if(n==0) { p++; break; }
+-				}
+-			}
 -		}
 -	}
 
