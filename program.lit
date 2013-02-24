@@ -58,6 +58,7 @@
 -	char *p=preview.from;
 -	char s[]=".e.XXXXXX";
 -	int f=mkstemp(s);
+-	unlink(s);
 -	for(;;) {
 -		int towrite=preview.to-p;
 -		if(towrite>1024) towrite=1024;
