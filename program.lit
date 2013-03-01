@@ -185,6 +185,8 @@
 -		p+=toread;
 -	}
 -	source.e=p;
+-	source.from=source.s;
+-	source.to=source.from+1;
 -	close(f);
 -}
 
