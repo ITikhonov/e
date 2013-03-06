@@ -501,6 +501,7 @@
 -		display();
 
 -		char buf[16];
+-		memset(buf,0,sizeof(buf));
 -		if(read(STDIN_FILENO,&buf,16)==-1) die();
 -		key(buf[0],buf+1);
 -	}
