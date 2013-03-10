@@ -97,7 +97,7 @@
 
 =savefile
 - void savefile(void) {
--	int f=open(filename,O_WRONLY|O_TRUNC,0666);
+-	int f=open(filename,O_CREAT|O_WRONLY|O_TRUNC,0666);
 -
 -	int i;
 -	int size=preview.e-preview.s;
@@ -167,7 +167,16 @@
 -char *filename=0;
 
 -void loadfile(void) {
--	int f=open(filename,O_CREAT|O_RDONLY,0666);
+-	int f=open(filename,O_RDONLY,0666);
+-	if(f==-1) {
+-		source.s=realloc(source.s,1);
+-		source.s[0]='\n';
+-		source.e=source.s+1;
+-		source.from=source.s;
+-		source.to=source.from+1;
+-		return;
+-	}
+
 -	struct stat st;
 -	fstat(f,&st);
 
