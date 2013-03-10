@@ -97,8 +97,7 @@
 
 =savefile
 - void savefile(void) {
--	char tmp[]="./.e.XXXXXX";
--	int f=mkstemp(tmp);
+-	int f=open(filename,O_WRONLY|O_TRUNC,0666);
 -
 -	int i;
 -	int size=preview.e-preview.s;
@@ -110,7 +109,6 @@
 -		i+=r;
 -	}
 -	close(f);
--	rename(tmp,filename);
 -}
 
 
