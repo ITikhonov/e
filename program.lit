@@ -271,7 +271,11 @@
 -						hlstate=newhlstate;
 -					}
 -				}
--				write(STDOUT_FILENO,&c,1);
+-				if(c>='\x20' && c<='\x7E') {
+-					write(STDOUT_FILENO,&c,1);
+-				} else {
+-					write(STDOUT_FILENO,CSI "31m~" CSI "37m",11);
+-				}
 
 -				x++;
 -			} else if(x==win.ws_col-5) {
